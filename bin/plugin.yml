@@ -1,0 +1,9 @@
+name: Hitreg
+version: "1.0-RC2"
+author: "frash23"
+main: "com.deyo.hitreg.Hitreg"
+depend: [ ProtocolLib ]
+commands:
+  hitreg:
+    aliases: [ sh ]
+    permission: hitreg.admin

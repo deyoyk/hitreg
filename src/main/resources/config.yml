@@ -1,0 +1,13 @@
+# Hitreg configuration
+
+# Enable plugin listener on startup
+enabled: true
+
+# Should criticals be enabled?
+enable-criticals: true
+
+# How many blocks of reach can players have?
+max-reach: 3.85
+
+# Bridge to other PvP proteciton plugins
+# (No external bridge integrations)

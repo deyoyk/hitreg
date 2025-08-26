@@ -1,0 +1,9 @@
+com\deyo\hitreg\HitRegCommand.class
+com\deyo\hitreg\AsyncPreDamageEvent.class
+com\deyo\hitreg\HitListener$1.class
+com\deyo\hitreg\HitReg$1.class
+com\deyo\hitreg\damageresolver\DamageResolver.class
+com\deyo\hitreg\HitListener.class
+com\deyo\hitreg\HitReg.class
+com\deyo\hitreg\damageresolver\DamageResolver_1_8_R3.class
+com\deyo\hitreg\HitRegDebug.class
