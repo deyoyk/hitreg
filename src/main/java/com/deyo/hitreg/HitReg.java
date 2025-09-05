@@ -56,8 +56,7 @@ public class HitReg extends JavaPlugin implements Listener {
 				@Override public void run() {
 					setHitListener( new HitListener(
 							instance,
-							getConfig().getBoolean("enable-criticals"),
-							getConfig().getDouble("max-reach")
+							getConfig().getBoolean("enable-criticals")
 					) );
 
 					setHitListenerHandler( pmgr.getAsynchronousManager().registerAsyncHandler( getHitListener() ) );
@@ -71,7 +70,6 @@ public class HitReg extends JavaPlugin implements Listener {
 
 	void unregisterHitListener() {
 		if( getHitListener() != null) {
-			getHitListener().stop();
 			pmgr.getAsynchronousManager().unregisterAsyncHandler( getHitListenerHandler() );
 			listening = false;
 			setHitListener(null);

@@ -19,7 +19,7 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.lang.reflect.InvocationTargetException;
+
 import java.util.Collections;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -33,9 +33,7 @@ class HitListener extends PacketAdapter {
 
 	private Queue<EntityDamageByEntityEvent> hitQueue = new ConcurrentLinkedQueue<>();
 
-	private static float MAX_DISTANCE;
-
-	HitListener(HitReg pl, boolean useCrits, double maxDistance) {
+	HitListener(HitReg pl, boolean useCrits) {
 		super(pl, ListenerPriority.HIGH, Collections.singletonList( PacketType.Play.Client.USE_ENTITY) );
 
 		plugin = pl;
@@ -43,8 +41,6 @@ class HitListener extends PacketAdapter {
 
 		damageResolver = DamageResolver.getDamageResolver(useCrits);
 		if(damageResolver == null) throw new NullPointerException("Damage resolver is null, unsupported Spigot version?");
-
-		MAX_DISTANCE = (float)maxDistance * (float)maxDistance;
 	}
 
 	private BukkitTask hitQueueProcessor = new BukkitRunnable() {
@@ -53,7 +49,16 @@ class HitListener extends PacketAdapter {
 			while( hitQueue.size() > 0 ) {
 				EntityDamageByEntityEvent e = hitQueue.remove();
 				getPluginManager().callEvent(e);
-				if( !e.isCancelled() ) ( (Damageable)e.getEntity() ).damage( e.getFinalDamage(), e.getDamager() );
+				if( !e.isCancelled() ) {
+					Player attacker = (Player) e.getDamager();
+					PacketContainer damageAnimation = new PacketContainer(PacketType.Play.Server.ENTITY_STATUS);
+					damageAnimation.getIntegers().write(0, e.getEntity().getEntityId());
+					damageAnimation.getBytes().write(0, (byte)2);
+					
+					pmgr.sendServerPacket(attacker, damageAnimation);
+					
+					( (Damageable)e.getEntity() ).damage( e.getFinalDamage(), e.getDamager() );
+				}
 			}
 		}
 	}.runTaskTimer(HitReg.getInstance(), 1, 1);
@@ -73,17 +78,10 @@ class HitListener extends PacketAdapter {
 		&& packet.getEntityUseActions().read(0) == EntityUseAction.ATTACK	// Packet is for entity damage
 		&& target != null && !target.isDead()									// Target entity is damageable
 		&& world == target.getWorld() && world.getPVP() 						// Attacker & target are in the same world
-		&& attacker.getLocation().distanceSquared( target.getLocation() ) < MAX_DISTANCE 			// Distance sanity check
 		&& (!(target instanceof Player) || ((Player) target).getGameMode() != GameMode.CREATIVE)) { // Don't hit Players in creative mode
 
 			/* The check above ensures we can roll our own hits */
 			e.setCancelled(true);
-
-			/* Construct the fake packet for making the attacker's
-			 * victim appear hit */
-			PacketContainer damageAnimation = new PacketContainer(PacketType.Play.Server.ENTITY_STATUS);
-			damageAnimation.getIntegers().write(0, target.getEntityId());
-			damageAnimation.getBytes().write(0, (byte)2);
 
 			double damage = damageResolver.getDamage(attacker, target);
 
@@ -91,9 +89,6 @@ class HitListener extends PacketAdapter {
 			getPluginManager().callEvent(damageEvent);
 
 			if( !damageEvent.isCancelled() ) {
-
-				pmgr.sendServerPacket(attacker, damageAnimation);
-
 				// Queue the hit without CPS limiting
 				hitQueue.add( new EntityDamageByEntityEvent( attacker, target, DamageCause.ENTITY_ATTACK, damageEvent.getDamage() ) );
 			}
